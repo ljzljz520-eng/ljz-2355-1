@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>售后手册 · 故障码 / 机型 / 现场记录</title>
+  <meta name="description" content="按机型解释故障码、有方向的备件替代、手册快照与逐项继承判定、离线现场记录、版本可追溯打印" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">🔧 售后手册现场站</div>
+  <nav>
+    <a href="#/faults">故障码检索</a>
+    <a href="#/parts">备件替代</a>
+    <a href="#/field">现场工单</a>
+    <a href="#/programs">业务服务</a>
+    <a href="#/packages">离线打包</a>
+    <a href="#/review">审核资料</a>
+  </nav>
+  <span id="net" class="net">检测中…</span>
+</header>
+<main id="app"></main>
+<template id="tpl-faults">
+  <section class="card">
+    <h2>故障码检索（码值不跨机型套用）</h2>
+    <p class="hint">同一故障码在不同机型可能含义完全不同；必须先选机型，系统只返回该机型审核通过的解释，绝不按字符串张冠李戴。</p>
+    <div class="row">
+      <label>机型
+        <select id="f-model"></select>
+      </label>
+      <label class="grow">故障码 / 症状关键词
+        <input id="f-q" placeholder="如 E404 或 绝缘" />
+      </label>
+      <button id="f-go">检索</button>
+      <button id="f-any" class="ghost">不选机型试试（仅消歧）</button>
+    </div>
+    <div id="f-out" class="out"></div>
+  </section>
+</template>
+
+<template id="tpl-parts">
+  <section class="card">
+    <h2>备件替代关系（有方向 · 有生效范围 · 不传递推断）</h2>
+    <div class="row">
+      <label class="grow">查询件号
+        <input id="p-no" placeholder="如 TC-110" />
+      </label>
+      <label>机型 <select id="p-model"></select></label>
+      <label class="grow">序列号（核验生效区间）
+        <input id="p-serial" placeholder="如 AX1-2026-0300，可留空" />
+      </label>
+      <button id="p-go">查直接替代</button>
+      <button id="p-chain" class="ghost">诊断：多跳链（不作兼容结论）</button>
+    </div>
+    <div id="p-out" class="out"></div>
+    <h3>登记替代边（会做环检测）</h3>
+    <div class="row">
+      <input id="p-from" placeholder="源件号，如 TC-100" />
+      <input id="p-to" placeholder="被替代件号，如 TC-120" />
+      <select id="p-dir"><option value="forward_only">仅正向</option><option value="declared_pair">显式双向互换</option></select>
+      <button id="p-add">新增边</button>
+    </div>
+    <div id="p-addout"></div>
+  </section>
+</template>
+
+<template id="tpl-field">
+  <section class="card">
+    <h2>现场工单（离线勾选 · 绑定手册快照）</h2>
+    <div class="row">
+      <label>机型 <select id="w-model"></select></label>
+      <label class="grow">说明版（只列审核通过版）<select id="w-manual"></select></label>
+      <label>服务程序 <select id="w-program"></select></label>
+      <input id="w-serial" placeholder="序列号（可选）" />
+      <button id="w-create">建工单并下载快照</button>
+    </div>
+    <div id="w-list"></div>
+    <div id="w-detail"></div>
+  </section>
+</template>
+
+<template id="tpl-programs">
+  <section class="card">
+    <h2>业务服务 · 服务程序适用范围</h2>
+    <p class="hint">适用范围按机型白名单与序列号区间判定；无序列号时不做“近似适用”。建单时选择的程序必须实际覆盖本机。</p>
+    <div class="row">
+      <label>机型 <select id="sp-model"></select></label>
+      <label class="grow">序列号
+        <input id="sp-serial" placeholder="如 AX1-2026-0300，可留空" />
+      </label>
+      <button id="sp-go">查询适用程序</button>
+    </div>
+    <div id="sp-out" class="out"></div>
+    <h3>登记服务程序（管理动作）</h3>
+    <div class="row">
+      <input id="sp-name" placeholder="程序名称，如 延保三年" />
+      <input id="sp-months" placeholder="质保月数，如 36" style="max-width:120px" />
+      <input id="sp-serfrom" placeholder="序列号起（可空）" />
+      <input id="sp-serto" placeholder="序列号止（可空）" />
+      <button id="sp-add">新增（仅适用当前所选机型）</button>
+    </div>
+    <div id="sp-addout"></div>
+  </section>
+</template>
+
+<template id="tpl-packages">
+  <section class="card">
+    <h2>离线打包与撤回</h2>
+    <div class="row">
+      <label>机型 <select id="pk-model"></select></label>
+      <label class="grow">手册版本 <select id="pk-manual"></select></label>
+      <button id="pk-full">下载整机型包</button>
+    </div>
+    <div class="row">
+      <label class="grow">任务依赖包根任务（逗号分隔 key）
+        <input id="pk-roots" placeholder="如 S-TEMP" />
+      </label>
+      <button id="pk-task">按任务依赖打包</button>
+      <button id="pk-cmp">比较两种打包</button>
+    </div>
+    <div id="pk-out" class="out"></div>
+    <h3>已有包</h3>
+    <div id="pk-list"></div>
+  </section>
+</template>
+
+<template id="tpl-review">
+  <section class="card">
+    <h2>审核资料（现场端只呈现审核通过内容）</h2>
+    <p class="hint">草稿、未审核条目不进入现场检索与工单。系统不生成任何手册之外的“维修操作建议”。</p>
+    <pre id="rv-out" class="dump">加载中…</pre>
+  </section>
+</template>
+
+<script type="module" src="/app.js"></script>
+<script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+</body>
+</html>

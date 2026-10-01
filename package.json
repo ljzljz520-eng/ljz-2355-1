@@ -1,0 +1,17 @@
+{
+  "name": "aftersales-manual-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "售后手册网站：故障码/机型检索、有方向的备件替代、手册快照与步骤继承判定、离线现场记录、打包/撤回/版本可追溯打印",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "NODE_ENV=development node server/index.js",
+    "seed": "node server/db/seed.js",
+    "test": "node --test tests/"
+  },
+  "engines": { "node": ">=20" },
+  "optionalDependencies": {
+    "pg": "^8.13.0"
+  }
+}
