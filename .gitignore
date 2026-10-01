@@ -23,3 +23,6 @@ __pycache__/
 *.log
 .env
 .env.*
+
+# PGlite 本地数据目录（运行时持久化，不入库）
+.data/

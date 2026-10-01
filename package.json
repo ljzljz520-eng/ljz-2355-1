@@ -1,0 +1,17 @@
+{
+  "name": "aftersales-manual-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "售后手册网站：根 docs 工程 + PostgreSQL 版本化数据 + 离线现场记录",
+  "scripts": {
+    "start": "node server/index.js",
+    "seed": "node server/seed.js",
+    "reset": "rm -rf .data && node server/seed.js",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "express": "^4.21.2"
+  }
+}

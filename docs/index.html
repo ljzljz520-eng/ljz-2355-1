@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>售后手册平台 · 故障码 / 机型 / 现场记录</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">🛠</span>
+    <div>
+      <h1>售后手册平台</h1>
+      <p>版本化说明 · 机型作用域故障码 · 有向备件兼容 · 离线现场记录与证据保留</p>
+    </div>
+  </div>
+  <div class="rule-banner">本平台只呈现<b>已审核</b>的手册资料与释义，不生成或推测任何维修操作。</div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="lookup" class="active">故障码检索</button>
+  <button data-tab="manuals">机型与手册版本</button>
+  <button data-tab="parts">备件兼容</button>
+  <button data-tab="coverage">适用范围</button>
+  <button data-tab="workorders">工单与现场记录</button>
+  <button data-tab="packages">离线包</button>
+  <button data-tab="audit">审计日志</button>
+</nav>
+
+<main>
+  <!-- 故障码检索 -->
+  <section id="tab-lookup" class="tab active">
+    <div class="card">
+      <h2>故障码检索（必须带机型作用域）</h2>
+      <p class="hint">同一故障码在不同机型下可能含义完全不同；系统不会按字符串命中跨机型套用，也不会对未知故障码给出推测解释。</p>
+      <div class="row">
+        <label>机型
+          <select id="lk-model"><option value="">（未选择）</option></select>
+        </label>
+        <label>故障码 <input id="lk-code" placeholder="如 E-410" value="E-410" /></label>
+        <button class="primary" id="lk-go">检索</button>
+      </div>
+      <div id="lk-result" class="result"></div>
+      <h3>本机型已审核故障码</h3>
+      <div id="lk-faultlist" class="chips"></div>
+    </div>
+  </section>
+
+  <!-- 机型与手册 -->
+  <section id="tab-manuals" class="tab">
+    <div class="card">
+      <h2>机型修订与手册步骤版本</h2>
+      <div id="models-list"></div>
+    </div>
+    <div class="card">
+      <h2>发布新的已审核手册版本</h2>
+      <p class="hint">发布后旧版标记为 superseded；已绑定旧版的现场工单，关键步骤需逐项判定能否继承，系统不会静默重置或全部算完成。</p>
+      <div class="row">
+        <label>机型 <select id="nv-model"></select></label>
+        <label>版本 <input id="nv-version" placeholder="如 v1.2" /></label>
+      </div>
+      <div id="nv-steps"></div>
+      <div class="row">
+        <button id="nv-addstep">+ 增加步骤</button>
+        <button class="primary" id="nv-publish">发布新版本</button>
+      </div>
+      <div id="nv-result" class="result"></div>
+    </div>
+  </section>
+
+  <!-- 备件 -->
+  <section id="tab-parts" class="tab">
+    <div class="card">
+      <h2>备件替代关系（有向 · 生效范围 · 无环）</h2>
+      <p class="hint">替代有方向（A 可替 B ≠ B 可替 A）；传递只在整条路径的机型/序列号/日期范围交集覆盖现场时成立；新增关系若成环将被拒绝。</p>
+      <div class="row">
+        <label>现场机型 <select id="cp-model"><option value="">不限</option></select></label>
+        <label>序列号 <input id="cp-serial" type="number" placeholder="500" value="500" /></label>
+        <label>日期 <input id="cp-date" type="date" /></label>
+      </div>
+      <div class="row">
+        <label>我手中的件 <select id="cp-source"></select></label>
+        <span>能否替代</span>
+        <label>目标件 <select id="cp-target"></select></label>
+        <button class="primary" id="cp-check">判定兼容</button>
+      </div>
+      <div id="cp-result" class="result"></div>
+      <h3>登记替代关系</h3>
+      <div class="row">
+        <select id="sb-sku"></select>
+        <select id="sb-dir">
+          <option value="forward">可替代（正向）</option>
+          <option value="reverse">可被替代（反向）</option>
+          <option value="both">双向互换</option>
+        </select>
+        <select id="sb-replaces"></select>
+      </div>
+      <div class="row">
+        <label>限定机型 <select id="sb-model"><option value="">不限机型</option></select></label>
+        <label>序列号起 <input id="sb-from" type="number" /></label>
+        <label>序列号止 <input id="sb-to" type="number" /></label>
+        <label>生效日 <input id="sb-validfrom" type="date" /></label>
+        <button id="sb-add">登记</button>
+      </div>
+      <h3>现有替代边</h3>
+      <table id="sb-table"><thead><tr>
+        <th>件</th><th>方向</th><th>替代</th><th>机型</th><th>序列号</th><th>生效起</th><th>备注</th>
+      </tr></thead><tbody></tbody></table>
+    </div>
+  </section>
+
+  <!-- 适用范围 -->
+  <section id="tab-coverage" class="tab">
+    <div class="card">
+      <h2>业务服务管理 · 适用范围查询</h2>
+      <div class="row">
+        <label>机型 <select id="cv-model"></select></label>
+        <label>序列号 <input id="cv-serial" type="number" value="600" /></label>
+        <label>日期 <input id="cv-date" type="date" /></label>
+        <button class="primary" id="cv-go">查询适用</button>
+      </div>
+      <div id="cv-result" class="result"></div>
+    </div>
+  </section>
+
+  <!-- 工单 -->
+  <section id="tab-workorders" class="tab">
+    <div class="card">
+      <h2>工单与离线现场记录</h2>
+      <div class="row">
+        <button id="wo-refresh">刷新工单列表</button>
+        <select id="wo-select" style="flex:1"></select>
+      </div>
+      <div id="wo-detail"></div>
+    </div>
+  </section>
+
+  <!-- 离线包 -->
+  <section id="tab-packages" class="tab">
+    <div class="card">
+      <h2>下载离线包</h2>
+      <div class="row">
+        <label>机型 <select id="pk-model"></select></label>
+        <button class="primary" id="pk-full">下载整机型包</button>
+      </div>
+      <div class="row">
+        <label>工单 <select id="pk-wo"></select></label>
+        <button class="primary" id="pk-task">按任务依赖打包</button>
+      </div>
+      <pre id="pk-result" class="result code"></pre>
+    </div>
+  </section>
+
+  <!-- 审计 -->
+  <section id="tab-audit" class="tab">
+    <div class="card">
+      <h2>审计日志（撤回 / 裁决 / 冲突 / 打印 全部留痕）</h2>
+      <div class="row"><button id="au-refresh">刷新</button></div>
+      <table id="au-table"><thead><tr><th>时间</th><th>操作人</th><th>动作</th><th>对象</th><th>详情</th></tr></thead><tbody></tbody></table>
+    </div>
+  </section>
+</main>
+
+<div id="toast" class="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
